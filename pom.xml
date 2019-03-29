@@ -36,7 +36,7 @@
     <modules>
         <module>vertx-web-rate-limiting-local</module>
         <module>vertx-web-rate-limiting-common</module>
-        <!--<module>vertx-web-rate-limiting-redis</module>-->
+        <module>vertx-web-rate-limiting-concurrency-limits</module>
     </modules>
 
     <properties>
@@ -74,6 +74,11 @@
             <artifactId>junit-jupiter</artifactId>
             <version>RELEASE</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-codegen</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>

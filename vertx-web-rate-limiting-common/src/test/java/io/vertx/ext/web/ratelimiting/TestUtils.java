@@ -4,14 +4,18 @@ import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxTestContext;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,11 +34,15 @@ public class TestUtils {
   }
 
   public static void testBurst(Vertx vertx, long succeeding, long failing, VertxTestContext testContext, Checkpoint check) {
-    HttpClient client = vertx.createHttpClient();
+    testBurst(vertx, succeeding, failing, null, testContext, check);
+  }
 
-    long reqNumber = succeeding + failing;
+  public static void testBurst(Vertx vertx, long succeeding, long failing, Consumer<HttpClientRequest> requestModifier, VertxTestContext testContext, Checkpoint check) {
+    testBurst(succeeding, failing, IntStream.range(0, (int) (succeeding + failing)).mapToObj(i -> doDelayedRequest(vertx, requestModifier)), null, testContext, check);
+  }
 
-    List<Future> results = IntStream.range(0, (int) reqNumber).mapToObj(i -> doRequest(client)).collect(Collectors.toList());
+  public static void testBurst(long succeeding, long failing, Stream<Future<Integer>> requestStream, String batchName, VertxTestContext testContext, Checkpoint check) {
+    List<Future> results = requestStream.collect(Collectors.toList());
 
     CompositeFuture
         .all(results)
@@ -43,17 +51,30 @@ public class TestUtils {
           else
             testContext.verify(() -> {
               long succeeded = cf.result().list().stream().filter(i -> ((Integer)i) == 200).count();
-              assertThat(succeeded).isEqualTo(succeeding);
+              assertThat(succeeded).as("Succeeding requests of batch %s", batchName).isEqualTo(succeeding);
               long failed = cf.result().list().stream().filter(i -> ((Integer)i) == 429).count();
-              assertThat(failed).isEqualTo(failing);
+              assertThat(failed).as("Failing requests of batch %s", batchName).isEqualTo(failing);
               check.flag();
             });
         });
   }
 
-  private static Future<Integer> doRequest(HttpClient client) {
+  public static Supplier<Future<Integer>> prepareRequest(Vertx vertx, Consumer<HttpClientRequest> modifyRequest) {
     Future<Integer> fut = Future.future();
-    client.getAbs("http://localhost:3000/hello", res -> fut.complete(res.statusCode())).end();
+    HttpClient client = vertx.createHttpClient();
+    HttpClientRequest req = client.getAbs("http://localhost:3000/hello", res -> fut.complete(res.statusCode()));
+    if (modifyRequest != null) modifyRequest.accept(req);
+    return () -> {
+      req.end();
+      client.close();
+      return fut;
+    };
+  }
+
+  public static Future<Integer> doDelayedRequest(Vertx vertx, Consumer<HttpClientRequest> modifyRequest) {
+    Future<Integer> fut = Future.future();
+    Supplier<Future<Integer>> prepared = prepareRequest(vertx, modifyRequest);
+    vertx.setTimer(100, l -> prepared.get().setHandler(fut));
     return fut;
   }
 
