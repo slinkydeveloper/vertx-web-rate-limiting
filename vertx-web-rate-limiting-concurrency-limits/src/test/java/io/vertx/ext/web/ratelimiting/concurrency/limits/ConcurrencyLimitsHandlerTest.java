@@ -97,8 +97,7 @@ class ConcurrencyLimitsHandlerTest {
               requestBatch2.add(doDelayedRequest(vertx, req -> req.putHeader("Rate-limit-partition", "2")));
           }
           testBurst(10, 40, requestBatch1.stream(), "1", testContext, checkpoint);
-          testBurst(10, 4 0, requestBatch2.stream(), "2", testContext, checkpoint);
-
+          testBurst(10, 40, requestBatch2.stream(), "2", testContext, checkpoint);
         }));
   }
 
