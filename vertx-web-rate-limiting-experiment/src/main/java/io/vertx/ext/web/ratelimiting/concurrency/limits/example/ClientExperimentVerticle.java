@@ -7,6 +7,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.micrometer.MicrometerMetricsOptions;
@@ -15,6 +16,7 @@ import io.vertx.micrometer.backends.BackendRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -29,15 +31,15 @@ public class ClientExperimentVerticle extends AbstractVerticle {
 
   @Override
   public void start() {
-    vertx.setTimer(10000, t -> {
+    HttpClient client = vertx.createHttpClient(new HttpClientOptions().setMaxPoolSize(1000).setIdleTimeout(3).setIdleTimeoutUnit(TimeUnit.SECONDS));
+    vertx.setTimer(5000, t -> {
       MeterRegistry registry = BackendRegistries.getDefaultNow();
       Counter counter200Requests = registry.counter("200_requests");
       Counter counter429Requests = registry.counter("429_requests");
-      vertx.setPeriodic(3000, l -> {
-        i.compareAndSet(10, 0);
-        long requests = (long) Math.pow(2, i.getAndIncrement());
+      vertx.setPeriodic(1, l -> {
+        long requests = (long) i.getAndIncrement();
         log.info("Running requests {}", requests);
-        LongStream.range(0, requests).mapToObj(i -> doDelayedRequest("http://localhost:4000/hello", vertx)).forEach(f -> {
+        LongStream.range(0, requests).mapToObj(i -> prepareRequest(client, "http://localhost:4000/hello").get()).forEach(f -> {
           f.setHandler(ar -> {
             if (ar.failed()) log.error("Error!", ar.cause());
             else {
@@ -52,22 +54,13 @@ public class ClientExperimentVerticle extends AbstractVerticle {
     });
   }
 
-  public static Supplier<Future<Integer>> prepareRequest(String url, Vertx vertx) {
+  public static Supplier<Future<Integer>> prepareRequest(HttpClient client, String url) {
     Future<Integer> fut = Future.future();
-    HttpClient client = vertx.createHttpClient();
     HttpClientRequest req = client.getAbs(url, res -> fut.complete(res.statusCode()));
     return () -> {
       req.end();
-      client.close();
       return fut;
     };
-  }
-
-  public static Future<Integer> doDelayedRequest(String url, Vertx vertx) {
-    Future<Integer> fut = Future.future();
-    Supplier<Future<Integer>> prepared = prepareRequest(url, vertx);
-    vertx.setTimer(100, l -> prepared.get().setHandler(fut));
-    return fut;
   }
 
   public static void main(String[] args) {
