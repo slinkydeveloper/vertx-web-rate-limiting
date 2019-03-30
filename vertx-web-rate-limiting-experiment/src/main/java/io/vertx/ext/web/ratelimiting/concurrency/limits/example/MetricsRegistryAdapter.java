@@ -4,6 +4,9 @@ import com.netflix.concurrency.limits.MetricRegistry;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
 public class MetricsRegistryAdapter implements MetricRegistry {
@@ -16,7 +19,11 @@ public class MetricsRegistryAdapter implements MetricRegistry {
 
     @Override
     public SampleListener registerDistribution(String s, String... strings) {
-        return a -> {};
+        AtomicLong integer = new AtomicLong();
+        registry.gauge(s, integer);
+        return a -> {
+            integer.set(a.longValue());
+        };
     }
 
     @Override

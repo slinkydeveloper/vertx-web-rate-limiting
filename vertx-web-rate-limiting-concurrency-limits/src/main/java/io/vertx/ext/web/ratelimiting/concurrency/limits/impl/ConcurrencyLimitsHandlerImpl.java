@@ -1,7 +1,6 @@
 package io.vertx.ext.web.ratelimiting.concurrency.limits.impl;
 
 import com.netflix.concurrency.limits.Limiter;
-import com.netflix.concurrency.limits.limiter.SimpleLimiter;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.LimiterListener;
