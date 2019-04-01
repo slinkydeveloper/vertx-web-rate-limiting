@@ -27,15 +27,16 @@ public class LocalBuckets implements Buckets {
 
   @Override
   public Future<Integer> tryReserveToken(String key) {
+    LocalRefiller refiller = refillProviders.computeIfAbsent(key, k -> refillProviderFactory.get());
     Integer result = this.buckets.merge(
       key,
-      refillProviders.computeIfAbsent(key, k -> refillProviderFactory.get()).newTokens(),
+      refiller.newTokens() - 1,
       (oldValue, newTokens) -> {
-        int remainingTokens = oldValue + newTokens - 1;
+        int remainingTokens = (newTokens + oldValue >= refiller.getBucketCapacity()) ? refiller.getBucketCapacity() - 1 : oldValue + newTokens;
         return remainingTokens > 0 ? remainingTokens : 0;
       }
     );
-    if (result == 0) return Future.failedFuture((String) null);
+    if (result == 0) return Future.failedFuture(new IllegalStateException("Cannot reserve a new token"));
     else return Future.succeededFuture(result);
   }
 }

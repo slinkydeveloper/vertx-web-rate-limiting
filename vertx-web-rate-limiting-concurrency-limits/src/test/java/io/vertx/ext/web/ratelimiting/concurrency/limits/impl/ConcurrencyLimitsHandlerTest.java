@@ -9,7 +9,6 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.ratelimiting.MyAsserts;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.LimiterListener;
 import io.vertx.junit5.Checkpoint;
@@ -21,12 +20,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static io.vertx.ext.web.ratelimiting.MyAsserts.*;
-import static io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler.*;
+import static io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler.newLimiterBuilder;
 import static io.vertx.ext.web.ratelimiting.concurrency.limits.RoutingContextPredicate.*;
+import static io.vertx.ext.web.ratelimiting.concurrency.limits.impl.MyAsserts.*;
 
 @ExtendWith(VertxExtension.class)
 class ConcurrencyLimitsHandlerTest {
@@ -135,9 +135,9 @@ class ConcurrencyLimitsHandlerTest {
 
     testContext.assertComplete(
       startServer(router, vertx)
-    ).setHandler(rc -> {
-      testRequest(501, vertx, testContext, checkpoint);
-    });
+    ).setHandler(rc ->
+      testRequest(501, vertx, testContext, checkpoint)
+    );
 
   }
 

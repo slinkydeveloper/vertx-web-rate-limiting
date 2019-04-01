@@ -8,18 +8,18 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class FixedTimeLocalRefiller implements LocalRefiller, Shareable {
 
-  private int capacity;
-  private long msRefillTimeout;
+  private int windowCapacity;
+  private long msOneRefillTimeout;
   private AtomicLong lastInstant;
 
-  public FixedTimeLocalRefiller(int capacity, Duration refillTimeout) {
-    this.capacity = capacity;
-    this.msRefillTimeout = refillTimeout.toMillis();
+  public FixedTimeLocalRefiller(int windowCapacity, Duration refillTimeout) {
+    this.windowCapacity = windowCapacity;
+    this.msOneRefillTimeout = refillTimeout.toMillis() / this.windowCapacity;
   }
 
   @Override
   public int getBucketCapacity() {
-    return capacity;
+    return windowCapacity;
   }
 
   @Override
@@ -30,7 +30,8 @@ public class FixedTimeLocalRefiller implements LocalRefiller, Shareable {
       return getBucketCapacity();
     }
     long difference = now - lastInstant.get();
-    lastInstant.set(now);
-    return (int) (difference / msRefillTimeout);
+    int newTokens = (int) (difference / msOneRefillTimeout);
+    if (newTokens > 0) lastInstant.set(now);
+    return newTokens;
   }
 }
