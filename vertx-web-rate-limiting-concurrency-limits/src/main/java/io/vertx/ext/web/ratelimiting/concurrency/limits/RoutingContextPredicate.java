@@ -19,7 +19,7 @@ public interface RoutingContextPredicate extends Predicate<RoutingContext> {
         int statusCode = ctx.response().getStatusCode();
         boolean b = statusCode >= startInclusive && statusCode < endExclusive;
         for (int sc : excluded) {
-          b = b && statusCode == sc;
+          b = b && statusCode != sc;
         }
         return b;
       };

@@ -4,7 +4,7 @@ import io.vertx.codegen.annotations.Fluent;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.impl.ConcurrencyLimitsHandlerImpl;
-import io.vertx.ext.web.ratelimiting.concurrency.limits.impl.VertxPartitionedLimiter;
+import io.vertx.ext.web.ratelimiting.concurrency.limits.impl.VertxLimiter;
 
 public interface ConcurrencyLimitsHandler extends Handler<RoutingContext> {
 
@@ -17,12 +17,12 @@ public interface ConcurrencyLimitsHandler extends Handler<RoutingContext> {
   @Fluent
   ConcurrencyLimitsHandler statusCodeForExceededLimit(int statusCode);
 
-  static ConcurrencyLimitsHandler create(VertxPartitionedLimiter.Builder limiterBuilder) {
+  static ConcurrencyLimitsHandler create(VertxLimiter.Builder limiterBuilder) {
     return new ConcurrencyLimitsHandlerImpl(limiterBuilder.build());
   }
 
-  static VertxPartitionedLimiter.Builder newLimiterBuilder() {
-    return new VertxPartitionedLimiter.Builder();
+  static VertxLimiter.Builder newLimiterBuilder() {
+    return new VertxLimiter.Builder();
   }
 
 }

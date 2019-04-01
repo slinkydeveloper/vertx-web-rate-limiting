@@ -2,6 +2,7 @@ package io.vertx.ext.web.ratelimiting.local;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.ratelimiting.KeyExtractionStrategy;
+import io.vertx.ext.web.ratelimiting.MyAsserts;
 import io.vertx.ext.web.ratelimiting.TestUtils;
 import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
@@ -11,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.Duration;
 
-import static io.vertx.ext.web.ratelimiting.TestUtils.*;
-
 @ExtendWith(VertxExtension.class)
 public class LocalRateLimiterHandlerTest {
 
@@ -21,7 +20,7 @@ public class LocalRateLimiterHandlerTest {
     Checkpoint checkpoint = testContext.checkpoint(1);
 
     testContext.assertComplete(
-      startRateLimitedServer(vertx,
+      TestUtils.startRateLimitedServer(vertx,
         LocalRateLimiterHandler.create(
           vertx,
           LocalRefiller.createFixedTimeRefillerSupplier(5, Duration.ofSeconds(1)),
@@ -29,7 +28,7 @@ public class LocalRateLimiterHandlerTest {
         )
       )
     ).setHandler(ar ->
-      testBurst(
+      MyAsserts.testBurst(
         vertx,
         5,
         5,
