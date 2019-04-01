@@ -1,9 +1,8 @@
 package io.vertx.ext.web.ratelimiting.concurrency.limits.example;
 
+import com.netflix.concurrency.limits.MetricRegistry;
 import com.netflix.concurrency.limits.limit.TracingLimitDecorator;
 import com.netflix.concurrency.limits.limit.VegasLimit;
-import com.netflix.concurrency.limits.limit.WindowedLimit;
-import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -12,14 +11,12 @@ import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler;
+import io.vertx.ext.web.ratelimiting.concurrency.limits.impl.MicrometerMetricsRegistryAdapter;
 import io.vertx.micrometer.MicrometerMetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.micrometer.backends.BackendRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.vertx.ext.web.ratelimiting.concurrency.limits.ConcurrencyLimitsHandler.newLimiterBuilder;
 import static io.vertx.ext.web.ratelimiting.concurrency.limits.RoutingContextPredicate.*;
@@ -34,6 +31,8 @@ public class ConcurrencyLimitsVerticle extends AbstractVerticle {
 
         final long startup = System.currentTimeMillis();
 
+        MetricRegistry concurrencyLimitsMetricsRegistry = MicrometerMetricsRegistryAdapter.create(registry);
+
         Router router = Router.router(vertx);
         router.get("/hello").handler(
                 ConcurrencyLimitsHandler.create(
@@ -41,9 +40,10 @@ public class ConcurrencyLimitsVerticle extends AbstractVerticle {
                                 .limit(TracingLimitDecorator.wrap(
                                         VegasLimit
                                             .newBuilder()
-                                            .metricRegistry(new MetricsRegistryAdapter(registry))
+                                            .metricRegistry(concurrencyLimitsMetricsRegistry)
                                             .build()
                                 ))
+                                .metricRegistry(concurrencyLimitsMetricsRegistry)
                 )
                         .errorPredicate(create5xxErrorPredicate())
                         .errorPredicate(createStatusCodePredicate(429))
