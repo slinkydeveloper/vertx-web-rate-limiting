@@ -2,7 +2,6 @@ package io.vertx.ext.web.ratelimiting.concurrency.limits;
 
 /**
  * Interface that delegates to {@link com.netflix.concurrency.limits.Limiter.Listener}
- *
  */
 public interface LimiterListener {
 

@@ -65,13 +65,13 @@ public class ClientExperimentVerticle extends AbstractVerticle {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
-        new MicrometerMetricsOptions()
-            .setPrometheusOptions(
-                new VertxPrometheusOptions()
-                    .setStartEmbeddedServer(true)
-                    .setEmbeddedServerOptions(new HttpServerOptions().setPort(5001))
-                    .setEnabled(true)
-            ).setEnabled(true)
+      new MicrometerMetricsOptions()
+        .setPrometheusOptions(
+          new VertxPrometheusOptions()
+            .setStartEmbeddedServer(true)
+            .setEmbeddedServerOptions(new HttpServerOptions().setPort(5001))
+            .setEnabled(true)
+        ).setEnabled(true)
     ));
     vertx.deployVerticle(new ClientExperimentVerticle());
   }

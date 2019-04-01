@@ -42,25 +42,25 @@ class ConcurrencyLimitsHandlerTest {
 
     Router router = Router.router(vertx);
     router.get("/hello").handler(
-        ConcurrencyLimitsHandler.create(
-            newLimiterBuilder()
-                .limit(TracingLimitDecorator.wrap(
-                    FixedLimit.of(10)
-                ))
-        )
-            .errorPredicate(create5xxErrorPredicate())
-            .errorPredicate(createStatusCodePredicate(429))
-            .ignorePredicate(create4xxErrorPredicate(429))
+      ConcurrencyLimitsHandler.create(
+        newLimiterBuilder()
+          .limit(TracingLimitDecorator.wrap(
+            FixedLimit.of(10)
+          ))
+      )
+        .errorPredicate(create5xxErrorPredicate())
+        .errorPredicate(createStatusCodePredicate(429))
+        .ignorePredicate(create4xxErrorPredicate(429))
     ).handler(rc -> vertx.setTimer(2000, v -> rc.response().setStatusCode(200).end()));
 
     vertx.createHttpServer(new HttpServerOptions())
-        .requestHandler(router)
-        .connectionHandler(httpConn -> {
-          log.debug("new http connection at time {}: {}", System.currentTimeMillis(), httpConn.remoteAddress());
-        })
-        .listen(3000, testContext.succeeding(httpServer -> {
-          testBurst(vertx, 10, 90, req -> req.putHeader("Rate-limit-id", "1"), testContext, checkpoint);
-        }));
+      .requestHandler(router)
+      .connectionHandler(httpConn -> {
+        log.debug("new http connection at time {}: {}", System.currentTimeMillis(), httpConn.remoteAddress());
+      })
+      .listen(3000, testContext.succeeding(httpServer -> {
+        testBurst(vertx, 10, 90, req -> req.putHeader("Rate-limit-id", "1"), testContext, checkpoint);
+      }));
   }
 
   @Test
@@ -70,35 +70,35 @@ class ConcurrencyLimitsHandlerTest {
 
     Router router = Router.router(vertx);
     router.get("/hello").handler(
-        ConcurrencyLimitsHandler.create(
-            newLimiterBuilder()
-                .limit(TracingLimitDecorator.wrap(FixedLimit.of(20)))
-                .partitionResolver(rc -> rc.request().getHeader("Rate-limit-partition"))
-                .partition("1", 0.5)
-                .partition("2", 0.5)
-        )
-            .errorPredicate(create5xxErrorPredicate())
-            .errorPredicate(createStatusCodePredicate(429))
-            .ignorePredicate(create4xxErrorPredicate(429))
+      ConcurrencyLimitsHandler.create(
+        newLimiterBuilder()
+          .limit(TracingLimitDecorator.wrap(FixedLimit.of(20)))
+          .partitionResolver(rc -> rc.request().getHeader("Rate-limit-partition"))
+          .partition("1", 0.5)
+          .partition("2", 0.5)
+      )
+        .errorPredicate(create5xxErrorPredicate())
+        .errorPredicate(createStatusCodePredicate(429))
+        .ignorePredicate(create4xxErrorPredicate(429))
     ).handler(rc -> vertx.setTimer(2000, v -> rc.response().setStatusCode(200).end()));
 
     vertx.createHttpServer(new HttpServerOptions())
-        .requestHandler(router)
-        .connectionHandler(httpConn -> {
-          log.debug("new http connection at time {}: {}", System.currentTimeMillis(), httpConn.remoteAddress());
-        })
-        .listen(3000, testContext.succeeding(httpServer -> {
-          List<Future<Integer>> requestBatch1 = new ArrayList<>();
-          List<Future<Integer>> requestBatch2 = new ArrayList<>();
-          for (int i = 0; i < 100; i++) {
-            if (i % 2 == 0)
-              requestBatch1.add(doDelayedRequest(vertx, req -> req.putHeader("Rate-limit-partition", "1")));
-            else
-              requestBatch2.add(doDelayedRequest(vertx, req -> req.putHeader("Rate-limit-partition", "2")));
-          }
-          testBurst(10, 40, requestBatch1.stream(), "1", testContext, checkpoint);
-          testBurst(10, 40, requestBatch2.stream(), "2", testContext, checkpoint);
-        }));
+      .requestHandler(router)
+      .connectionHandler(httpConn -> {
+        log.debug("new http connection at time {}: {}", System.currentTimeMillis(), httpConn.remoteAddress());
+      })
+      .listen(3000, testContext.succeeding(httpServer -> {
+        List<Future<Integer>> requestBatch1 = new ArrayList<>();
+        List<Future<Integer>> requestBatch2 = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+          if (i % 2 == 0)
+            requestBatch1.add(doDelayedRequest(vertx, req -> req.putHeader("Rate-limit-partition", "1")));
+          else
+            requestBatch2.add(doDelayedRequest(vertx, req -> req.putHeader("Rate-limit-partition", "2")));
+        }
+        testBurst(10, 40, requestBatch1.stream(), "1", testContext, checkpoint);
+        testBurst(10, 40, requestBatch2.stream(), "2", testContext, checkpoint);
+      }));
   }
 
 }

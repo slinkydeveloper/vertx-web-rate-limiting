@@ -45,18 +45,18 @@ public class TestUtils {
     List<Future> results = requestStream.collect(Collectors.toList());
 
     CompositeFuture
-        .all(results)
-        .setHandler(cf -> {
-          if (cf.failed()) testContext.failNow(cf.cause());
-          else
-            testContext.verify(() -> {
-              long succeeded = cf.result().list().stream().filter(i -> ((Integer)i) == 200).count();
-              assertThat(succeeded).as("Succeeding requests of batch %s", batchName).isEqualTo(succeeding);
-              long failed = cf.result().list().stream().filter(i -> ((Integer)i) == 429).count();
-              assertThat(failed).as("Failing requests of batch %s", batchName).isEqualTo(failing);
-              check.flag();
-            });
-        });
+      .all(results)
+      .setHandler(cf -> {
+        if (cf.failed()) testContext.failNow(cf.cause());
+        else
+          testContext.verify(() -> {
+            long succeeded = cf.result().list().stream().filter(i -> ((Integer) i) == 200).count();
+            assertThat(succeeded).as("Succeeding requests of batch %s", batchName).isEqualTo(succeeding);
+            long failed = cf.result().list().stream().filter(i -> ((Integer) i) == 429).count();
+            assertThat(failed).as("Failing requests of batch %s", batchName).isEqualTo(failing);
+            check.flag();
+          });
+      });
   }
 
   public static Supplier<Future<Integer>> prepareRequest(Vertx vertx, Consumer<HttpClientRequest> modifyRequest) {

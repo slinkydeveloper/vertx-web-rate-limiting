@@ -9,27 +9,27 @@ import java.util.function.Supplier;
 
 public class MicrometerMetricsRegistryAdapter implements MetricRegistry {
 
-    private final MeterRegistry registry;
+  private final MeterRegistry registry;
 
-    public MicrometerMetricsRegistryAdapter(MeterRegistry registry) {
-        this.registry = registry;
-    }
+  public MicrometerMetricsRegistryAdapter(MeterRegistry registry) {
+    this.registry = registry;
+  }
 
-    @Override
-    public SampleListener registerDistribution(String s, String... strings) {
-        DistributionSummary summary = registry.summary(s, strings);
-        return a -> summary.record(a.longValue());
-    }
+  @Override
+  public SampleListener registerDistribution(String s, String... strings) {
+    DistributionSummary summary = registry.summary(s, strings);
+    return a -> summary.record(a.longValue());
+  }
 
-    @Override
-    public void registerGauge(String s, Supplier<Number> supplier, String... strings) {
-        Gauge
-            .builder(s, supplier)
-            .tags(strings)
-            .register(registry);
-    }
+  @Override
+  public void registerGauge(String s, Supplier<Number> supplier, String... strings) {
+    Gauge
+      .builder(s, supplier)
+      .tags(strings)
+      .register(registry);
+  }
 
-    public static MicrometerMetricsRegistryAdapter create(MeterRegistry registry) {
-        return new MicrometerMetricsRegistryAdapter(registry);
-    }
+  public static MicrometerMetricsRegistryAdapter create(MeterRegistry registry) {
+    return new MicrometerMetricsRegistryAdapter(registry);
+  }
 }

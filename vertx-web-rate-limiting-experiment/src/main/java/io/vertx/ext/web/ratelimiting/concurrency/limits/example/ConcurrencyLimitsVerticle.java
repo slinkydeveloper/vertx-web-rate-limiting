@@ -23,54 +23,54 @@ import static io.vertx.ext.web.ratelimiting.concurrency.limits.RoutingContextPre
 
 public class ConcurrencyLimitsVerticle extends AbstractVerticle {
 
-    private final static Logger log = LoggerFactory.getLogger(ConcurrencyLimitsVerticle.class);
+  private final static Logger log = LoggerFactory.getLogger(ConcurrencyLimitsVerticle.class);
 
-    @Override
-    public void start(Future<Void> startFuture) throws Exception {
-        MeterRegistry registry = BackendRegistries.getDefaultNow();
+  @Override
+  public void start(Future<Void> startFuture) throws Exception {
+    MeterRegistry registry = BackendRegistries.getDefaultNow();
 
-        final long startup = System.currentTimeMillis();
+    final long startup = System.currentTimeMillis();
 
-        MetricRegistry concurrencyLimitsMetricsRegistry = MicrometerMetricsRegistryAdapter.create(registry);
+    MetricRegistry concurrencyLimitsMetricsRegistry = MicrometerMetricsRegistryAdapter.create(registry);
 
-        Router router = Router.router(vertx);
-        router.get("/hello").handler(
-                ConcurrencyLimitsHandler.create(
-                        newLimiterBuilder()
-                                .limit(TracingLimitDecorator.wrap(
-                                        VegasLimit
-                                            .newBuilder()
-                                            .metricRegistry(concurrencyLimitsMetricsRegistry)
-                                            .build()
-                                ))
-                                .metricRegistry(concurrencyLimitsMetricsRegistry)
-                )
-                        .errorPredicate(create5xxErrorPredicate())
-                        .errorPredicate(createStatusCodePredicate(429))
-                        .ignorePredicate(create4xxErrorPredicate(429))
-        ).handler(rc -> {
-            long waitTime = (System.currentTimeMillis() - startup) / 200L; // Increment 5ms/s
-            vertx.setTimer(waitTime, v -> rc.response().setStatusCode(200).end());
-        });
+    Router router = Router.router(vertx);
+    router.get("/hello").handler(
+      ConcurrencyLimitsHandler.create(
+        newLimiterBuilder()
+          .limit(TracingLimitDecorator.wrap(
+            VegasLimit
+              .newBuilder()
+              .metricRegistry(concurrencyLimitsMetricsRegistry)
+              .build()
+          ))
+          .metricRegistry(concurrencyLimitsMetricsRegistry)
+      )
+        .errorPredicate(create5xxErrorPredicate())
+        .errorPredicate(createStatusCodePredicate(429))
+        .ignorePredicate(create4xxErrorPredicate(429))
+    ).handler(rc -> {
+      long waitTime = (System.currentTimeMillis() - startup) / 200L; // Increment 5ms/s
+      vertx.setTimer(waitTime, v -> rc.response().setStatusCode(200).end());
+    });
 
-        vertx.createHttpServer(new HttpServerOptions())
-                .requestHandler(router)
-                .listen(4000, ar -> {
-                    if (ar.succeeded()) startFuture.complete();
-                    else startFuture.fail(ar.cause());
-                });
-    }
+    vertx.createHttpServer(new HttpServerOptions())
+      .requestHandler(router)
+      .listen(4000, ar -> {
+        if (ar.succeeded()) startFuture.complete();
+        else startFuture.fail(ar.cause());
+      });
+  }
 
-    public static void main(String[] args) {
-        Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
-                new MicrometerMetricsOptions()
-                        .setPrometheusOptions(
-                                new VertxPrometheusOptions()
-                                        .setStartEmbeddedServer(true)
-                                        .setEmbeddedServerOptions(new HttpServerOptions().setPort(5000))
-                                        .setEnabled(true)
-                        ).setEnabled(true)
-        ));
-        vertx.deployVerticle(new ConcurrencyLimitsVerticle());
-    }
+  public static void main(String[] args) {
+    Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(
+      new MicrometerMetricsOptions()
+        .setPrometheusOptions(
+          new VertxPrometheusOptions()
+            .setStartEmbeddedServer(true)
+            .setEmbeddedServerOptions(new HttpServerOptions().setPort(5000))
+            .setEnabled(true)
+        ).setEnabled(true)
+    ));
+    vertx.deployVerticle(new ConcurrencyLimitsVerticle());
+  }
 }

@@ -17,7 +17,7 @@ public class ConcurrencyLimitsHandlerImpl implements ConcurrencyLimitsHandler {
 
   private static final Logger log = LoggerFactory.getLogger(ConcurrencyLimitsHandler.class);
 
-  private Limiter<RoutingContext>limiter;
+  private Limiter<RoutingContext> limiter;
   private int statusCodeExceededLimit;
   private RoutingContextPredicate[] errorPredicates;
   private RoutingContextPredicate[] ignorePredicates;
@@ -25,8 +25,8 @@ public class ConcurrencyLimitsHandlerImpl implements ConcurrencyLimitsHandler {
   public ConcurrencyLimitsHandlerImpl(Limiter<RoutingContext> limiter) {
     this.limiter = limiter;
     this.statusCodeExceededLimit = 429;
-    this.errorPredicates = new RoutingContextPredicate[] {};
-    this.ignorePredicates = new RoutingContextPredicate[] {};
+    this.errorPredicates = new RoutingContextPredicate[]{};
+    this.ignorePredicates = new RoutingContextPredicate[]{};
   }
 
   @Override

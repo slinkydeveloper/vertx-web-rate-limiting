@@ -21,21 +21,21 @@ public class LocalRateLimiterHandlerTest {
     Checkpoint checkpoint = testContext.checkpoint(1);
 
     testContext.assertComplete(
-        startRateLimitedServer(vertx,
-            LocalRateLimiterHandler.create(
-                vertx,
-                LocalRefiller.createFixedTimeRefillerSupplier(5, Duration.ofSeconds(1)),
-                KeyExtractionStrategy.createAddressKeyExtractionStrategy()
-            )
+      startRateLimitedServer(vertx,
+        LocalRateLimiterHandler.create(
+          vertx,
+          LocalRefiller.createFixedTimeRefillerSupplier(5, Duration.ofSeconds(1)),
+          KeyExtractionStrategy.createAddressKeyExtractionStrategy()
         )
+      )
     ).setHandler(ar ->
-        testBurst(
-            vertx,
-            5,
-            5,
-            testContext,
-            checkpoint
-        )
+      testBurst(
+        vertx,
+        5,
+        5,
+        testContext,
+        checkpoint
+      )
     );
 
   }
